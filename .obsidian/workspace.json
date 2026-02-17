@@ -4,33 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "8a657b3097cf0181",
+        "id": "ac581bdd6ce0d17c",
         "type": "tabs",
         "children": [
           {
-            "id": "b6752b346cea1e3d",
+            "id": "d690f537c5510039",
             "type": "leaf",
             "state": {
-              "type": "mindmapview",
-              "state": {
-                "file": "wirekshark.md"
-              },
-              "icon": "blocks",
-              "title": "wirekshark"
-            }
-          },
-          {
-            "id": "8b2cec524cef6160",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "README.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "README"
+              "title": "新标签页"
             }
           }
         ]
@@ -193,8 +177,8 @@
             "state": {
               "type": "git-view",
               "state": {},
-              "icon": "git-pull-request",
-              "title": "Source Control"
+              "icon": "lucide-ghost",
+              "title": "git-view"
             }
           }
         ],
@@ -222,11 +206,18 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "b6752b346cea1e3d",
+  "active": "d690f537c5510039",
   "lastOpenFiles": [
-    "wirekshark.md",
     "README.md",
+    "2026-02-17.md",
+    "未命名 1.canvas",
+    "未命名.canvas",
     "未命名 1.base",
+    "WMS系统笔记/客户端代码积累 - 随手一记.md",
+    "WMS系统笔记/erlang 电商架构图.md",
+    "模板/周会-分享模板.md",
+    "模板/日志模板文件.md",
+    "wirekshark.md",
     "未命名.md",
     "未命名.base",
     "欢迎.md",
