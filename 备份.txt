@@ -1,0 +1,922 @@
+<!-- 运费计费策略编辑 -->
+<template style="overflow-y: auto!important;">
+  <EasyForm ref="easyForm" style="overflow-y: auto!important;" name="transportPolicyFeeEdit" :rules="rules"
+    :fetch-url="TransportFeePolicyModel.Get" :object-id="objectId" @loaded="AfterLoad" :model="formValues">
+    <el-divider content-position="left">策略信息</el-divider>
+    <FormItems>
+      <div class="form-items-child">
+        <FiHiddenParam name="formula" value="" />
+        <FiInput name="policyName" label="策略名称" maxLength="100" />
+        <FiSelect label="费用类型" name="type" :callback="getfeeTypeList" :clearable="false" :type="type"
+          :default-value=1 />
+        <FiSelect label="计费方式" name="chargingType" :callback="getChargingTypeList" :clearable="false" 
+        :default-value=0 />
+        <FiInputPlus name="remark" maxLength="255" label="备注" />
+      </div>
+    </FormItems>
+
+    <el-divider content-position="left">计费条件</el-divider>
+    <FormItems>
+      <div class="form-items-child">
+        <FiHiddenParam name="formula" value="" />
+        <FiSelect label="货主" name="ownerId" transform="@MyGoodsOwnerName2" placeholder="无" />
+        <FiSelect label="仓库" name="warehouseId" transform="@WarehouseName" :clearable="false" />
+        <FiSelect label="物流公司" name="logisticsId" transform="@InUseLogisticsName2" retainFilterWhenSelectChange />
+      </div>
+    </FormItems>
+
+    <el-divider style="margin-top: 0;" content-position="left">计费规则</el-divider>
+    <div style="display: flex;flex-direction: column;overflow-y: auto!important">
+      <div class="drag-container">
+        <draggable v-model="commonList" :group="{ name: 'items', pull: 'clone', put: false }" class="drag-common-list"
+          :animation="200" :sort="false" :clone="clone">
+          <template #item="{ element }">
+            <div v-if="!element.hasOwnProperty('type')" @click="() => { targetList.push(element) }"
+              class="draggable-item">{{ element.name }}
+            </div>
+            <div v-else class="draggable-item">
+              <el-input @click="() => { targetList.push(element) }" v-model="element.name" disabled
+                :clearable="false" />
+            </div>
+          </template>
+        </draggable>
+        <draggable v-model="customFieldsList" :group="{ name: 'items', pull: 'clone', put: false }"
+          class="drag-common-list" :animation="200" :sort="false" :clone="clone">
+          <template #item="{ element }">
+            <div v-if="element.type === 'condition'" class="draggable-item-condition"
+              @click="() => addConditionField(element)">
+              <span>{{ element.name }}</span>
+              <el-select v-model="element.defaultValue" size="small" style="width: 110px;margin-left: 5px;" @click.stop>
+                <template v-if="element.conditionType === 'destinationType'">
+                  <el-option label="终点地" value="1" />
+                  <el-option label="运输地" value="2" />
+                </template>
+                <template v-else-if="element.conditionType === 'transportMode'">
+                  <el-option label="城配" value="1" />
+                  <el-option label="干线" value="2" />
+                  <el-option label="直线" value="3" />
+                </template>
+                <template v-else-if="element.conditionType === 'loadingType'">
+                  <el-option label="整车" value="1" />
+                  <el-option label="零担" value="2" />
+                </template>
+              </el-select>
+            </div>
+            <div v-else class="draggable-item-fit" @click="() => { targetList.push(element) }">
+              {{ element.name }}
+            </div>
+          </template>
+        </draggable>
+      </div>
+
+      <div class="example">
+        <p>公式示例：IF（总重量 < 1 ，1.3 + （货品数量 - 1）× 0.2，IF（总重量 < 5 ，1.5 + （货品数量 - 1）× 0.2，1.8 +（货品数量 - 1） × 0.2））</p>
+            <p>示例说明：</p>
+            <p>如果重量小于1，则费用计算时一件货品为1.3，每增加一件货品增加0.2；</p>
+            <p>如果重量大于等于1小于5，则费用计算时一件货品为1.5，每增加一件货品增加0.2；</p>
+            <p>如果重量大于等于5，则费用计算时一件货品为1.8，每增加一件货品增加0.2；</p>
+      </div>
+
+      <div class="drag-target" style="margin-top: 10px">
+        <TableCmdBar style="border: none" :handles="formulaHandles" show-config="none">
+          <CmdMenu index="clear" label="清空公式" @click="ClearFormula" />
+          <CmdMenu index="add" label="添加为模板" @click="SaveTemplate" />
+          <template #right>
+            <FiSelectWithObjSel label="引用模板" :clearable="false" :change-check="OnChangedTemplateList"
+              transform="@ScorePerformanceFormulaTemplate" name="template" :callback="UpdateTemplate" />
+          </template>
+        </TableCmdBar>
+        <draggable v-model="targetList" :group="{ name: 'items', pull: false, put: true }" class="drag-target-list"
+          :animation="200">
+          <template #item="{ element, index }">
+            <div class="draggable-wrapper">
+              <div v-if="element.type === 'number'" class="number-input-wrapper">
+                <el-input style="max-width: 100px;cursor: pointer" ref="inputRef" v-model="element.name" maxlength="10"
+                  @dblclick="removeItem(index)" oninput="value=value.replace(/[^0-9.]+$/,'');" :clearable="false">
+                </el-input>
+              </div>
+              <div v-else :class="['cursor-indicator', { 'bordered': selectIndex == index }]"
+                @keydown.delete.prevent="removeItem(index)" @click="toggleBorder(index)" @dblclick="removeItem(index)"
+                tabindex="0">{{ element.name }}
+              </div>
+            </div>
+          </template>
+        </draggable>
+      </div>
+
+      <el-divider content-position="left">公式模拟计算</el-divider>
+      <div style="overflow-y: auto!important;min-height: 350px">
+        <EasyPage style="overflow-y: auto!important;height: 350px!important;">
+          <SearchPanel name="formula-table" style="overflow-y: auto!important;">
+            <TableCmdBar :handles="handles" show-config="none">
+              <CmdMenu index="test" label="公式模拟计算" @click="test" />
+            </TableCmdBar>
+            <DataTable 
+            v-if="formValues.type === 1" 
+            name="formulaDataTable" 
+            ref="goodsOwnerDataTable" 
+            :data="initData"
+            :seq="false" 
+            :column-defs="FormulaTable" />
+            <DataTable v-else-if="formValues.type === 2" name="formulaDataTable" ref="driverDataTable" :data="initData"
+              :seq="false" :column-defs="FormulaTable2" />
+          </SearchPanel>
+        </EasyPage>
+      </div>
+    </div>
+  </EasyForm>
+</template>
+
+<script setup lang="ts">
+import {
+  CmdMenu,
+  ColInfo, DataTable,
+  EasyForm,
+  EasyPage,
+  FiHiddenParam, FiInput,
+  FiSelect,
+  FormItems, ListId, notifySuccess, notifyWarning,
+  PlainObject,
+  SearchPanel, TableCmdBar, TableCmdHandles
+} from "@hc/easy-ui";
+import * as easy from "@hc/easy-ui";
+import FiInputPlus from "@/pages/common/FiInputPlus.vue";
+import { toNumber } from "lodash-es";
+import { ref, computed } from "vue";
+import { httpPost } from "@/utils/http.ts";
+import draggable from 'vuedraggable';
+import { ElInput } from "element-plus";
+import FiSelectWithObjSel from "@/pages/common/FiSelectWithObjSel.vue";
+import { Alert, DeepClone, IsStringValid, ToQueryParam } from "@/base/common.ts";
+import TextInput from "@/pages/setting/SettingBasic/EmployeeManage/TextInput.vue";
+import FormulaTemplate from "@/pages/common/FormulaTemplate.vue";
+import { TransportFeePolicyModel } from "@/model/api/o/TransportFeePolicyModel";
+
+const formValues = reactive<PlainObject>({
+  type: 1,
+  chargingType: 0,
+  warehouseId: 0,
+  formula: '',
+  isDisabled: 0,
+  ownerId: 0,
+  logisticsId: 0
+})
+
+const initData = ref<PlainObject[]>([
+  { recId: 1, order: '模拟单据1' },
+  { recId: 2, order: '模拟单据2' },
+  { recId: 3, order: '模拟单据3' },
+  { recId: 4, order: '模拟单据4' },
+  { recId: 5, order: '模拟单据5' }
+])
+
+const goodsOwnerDataTable = ref();
+const driverDataTable = ref();
+const selectIndex = ref<number | null>(null)
+const type = ref<number>(1);
+
+// 获取操作员类型列表
+const getfeeTypeList = async () => {
+  const allTypes = [
+    { id: 1, label: '应收货主费用' },
+    { id: 2, label: '应付司机费用' }
+  ];
+  return allTypes;
+};
+
+// 获取单据类型列表
+const getChargingTypeList = async () => {
+  const allTypes = [
+    { id: 0, label: '自定义公式' },
+  ];
+  return allTypes;
+};
+
+function toggleBorder(index: number) {
+  selectIndex.value = selectIndex.value === index ? null : index;
+}
+
+// 添加条件字段到公式
+function addConditionField(element: PlainObject) {
+  const displayMap: Record<string, string> = {
+    'pick_order_single': '分拣单类型=一单一货',
+    'pick_order_multi': '分拣单类型=一单多货',
+    'pick_order_same': '分拣单类型=相同货品',
+    'pick_order_second': '分拣单类型=二次分拣',
+    'pick_mode_basket': '拣货方式=逐筐分拣'
+  };
+
+  const newElement = {
+    id: element.defaultValue,
+    name: displayMap[element.defaultValue] || element.defaultValue
+  };
+  targetList.value.push(newElement);
+}
+
+// 检查规则
+const rules = reactive<easy.FormRules>({
+  policyName: [{ required: true, message: '请输入策略名称', trigger: ['blur', 'submit'] }],
+  warehouseId: [{ required: true, message: '请选择仓库', trigger: ['blur', 'submit'] }],
+  employeeType: [{ required: true, message: '请选择操作员', trigger: ['blur', 'submit'] }],
+  orderType: [{ required: true, message: '请选择单据类型', trigger: ['blur', 'submit'] }]
+});
+
+const props = defineProps<{
+  policyId?: number;
+  operateType?: string;
+  popupCtx?: easy.PopupCtx<any>
+}>();
+
+const popup = easy.usePopup(props);
+const objectId: easy.FormObjectId = {
+  data: {
+    policyId: props.policyId
+  },
+  isValid: () => props?.policyId != null
+};
+
+async function UpdateTemplate() {
+  await easy.showDialog(
+    FormulaTemplate,
+    {
+      type: 7, // 积分绩效模板类型
+    },
+    {
+      title: '公式模板',
+      customStyle: { width: '800px', height: '60%' },
+      closeOnPressEscape: true, defaultFooter: false,
+    }
+  )
+  easy.reloadTransform('@ScorePerformanceFormulaTemplate')
+}
+
+async function AfterLoad() {
+  console.log(props.policyId)
+  // 解析公式
+  console.log(formValues.formula.value)
+  if (formValues.formula) {
+    ParseFormula(formValues.formula)
+  }
+}
+
+function ParseFormula(formulaString: string) {
+  let len = formulaString.length;
+  let state = 'start';
+  let searchFrom = 0;
+  let i;
+  let target: PlainObject[] = [];
+  for (i = 0; i < len; i++) {
+    let c = formulaString.substring(i, i + 1);
+    if (state == 'start') {
+      switch (c) {
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '(':
+        case ')':
+        case ',':
+        case '%':
+        case '=':
+          target.push(GetSourceElement(c))
+          continue;
+        case '>':
+        case '<':
+          if (i + 2 < len && formulaString.substring(i + 1, i + 2) == '=') {
+            let v = c + '=';
+            target.push(GetSourceElement(v))
+            i++;
+            continue;
+          }
+          target.push(GetSourceElement(c))
+          continue;
+        case '|':
+        case '&':
+          if (i + 1 < len && formulaString.substring(i + 1, i + 2) == c) {
+            target.push(GetSourceElement(c + c))
+            ++i;
+            continue;
+          }
+          return notifyWarning('公式格式不正确')
+      }
+
+      if (!IsStringValid(c)) {
+        continue;
+      }
+
+      searchFrom = i;
+      if (c == '"') {
+        state = "string";
+      } else if (!isNaN(toNumber(c)) || c == '.') {
+        state = "number";
+      } else {
+        state = "custom";
+      }
+      continue;
+    }
+
+    if (state == "string") {
+      if (c == '"') {
+        state = "start";
+      } else if (c == '\\') {
+        ++i;
+      }
+    } else if (state == "number") {
+      if (isNaN(toNumber(c)) && c != '.') {
+        let v = formulaString.substring(searchFrom, i);
+        target.push(GetSourceElement('num', v))
+        state = "start";
+        --i;
+      }
+    } else {
+      if (!IsLetterOrDigit(c) && c != '_' && c != ':') {
+        let v = formulaString.substring(searchFrom, i);
+        target.push(GetSourceElement(v))
+        state = "start";
+        --i;
+      }
+    }
+  }
+
+  if (state == "string") {
+    return notifyWarning('公式格式不正确');
+  }
+
+  if (state == "number") {
+    let v = formulaString.substring(searchFrom, len);
+    target.push(GetSourceElement('num', v))
+  } else if (state == "custom") {
+    let v = formulaString.substring(searchFrom, len);
+    target.push(GetSourceElement(v))
+  }
+
+  targetList.value = target;
+}
+
+function IsLetterOrDigit(char: string): boolean {
+  if (char.length !== 1) {
+    return false
+  }
+
+  const regex = /^[a-zA-Z0-9]$/;
+  return regex.test(char);
+}
+
+function GetSourceElement(name: string, value: string | null = null) {
+  for (let item of commonList.value) {
+    if (item.id.toString() == name) {
+      let tmpItem = DeepClone(item)
+      if (value != null) {
+        tmpItem.name = value
+      }
+      return tmpItem;
+    }
+  }
+
+  for (let item of customFieldsList.value) {
+    if (item.id.toString() == name) {
+      let tmpItem = DeepClone(item)
+      if (value != null) {
+        tmpItem.name = value
+      }
+      return tmpItem;
+    }
+  }
+
+  // 处理条件字段
+  const conditionFields: Record<string, string> = {
+    'pick_mode_large': '拣货方式=大单拣货',
+    'pick_mode_basket': '拣货方式=逐筐分拣',
+    'pick_order_single': '分拣单类型=一单一货',
+    'pick_order_multi': '分拣单类型=一单多货',
+    'pick_order_same': '分拣单类型=相同货品',
+    'pick_order_second': '分拣单类型=二次分拣'
+  };
+
+  if (conditionFields[name]) {
+    return { id: name, name: conditionFields[name] };
+  }
+
+  return { id: name, name: name }
+}
+
+// 删除方法
+const removeItem = (index: number) => {
+  targetList.value.splice(index, 1);
+};
+
+class FormulaTable {
+  @ColInfo('单据', { minWidth: 100, flex: 1 }) order = '';
+  @ColInfo('货品种类数', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) goodsTypeCount = 0;
+  @ColInfo('货品数量', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) goodsCount = 0;
+  @ColInfo('总重量（kg）', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) weight = 0;
+  @ColInfo('总体积（cm³）', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) volume = 0;
+  @ColInfo('目的地类型', {
+    width: 140, mode: 'select', cellRendererParams: {
+      callback: async () => {
+        return [
+          { id: 1, label: '终点地' },
+          { id: 2, label: '运输地' },
+        ];
+      }
+    }
+  }) destinationType = 1;
+  @ColInfo('运输模式', {
+    width: 140, mode: 'select', cellRendererParams: {
+      callback: async () => {
+        return [
+          { id: 1, label: '城配' },
+          { id: 2, label: '干线' },
+          { id: 3, label: '直线' },
+        ];
+      }
+    }
+  }) transportMode = 1;
+  @ColInfo('配载类型', {
+    width: 140, mode: 'select', cellRendererParams: {
+      callback: async () => {
+        return [
+          { id: 1, label: '整车' },
+          { id: 2, label: '零担' },
+        ];
+      }
+    }
+  }) loadingType = 1;
+  @ColInfo('运输费用', { width: 140, pinned: 'right' }) fee = '';
+}
+
+
+class FormulaTable2 {
+  @ColInfo('序号', { width: 80 }) seq = 0;
+  @ColInfo('单据', { minWidth: 100, flex: 1 }) order = '';
+  @ColInfo('货品种类数', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) goodsTypeCount = 0;
+  @ColInfo('货品数量', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) goodsCount = 0;
+  @ColInfo('订单数', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) orderNum = 0;
+  @ColInfo('总重量（kg）', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) weight = 0;
+  @ColInfo('总体积（cm³）', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) volume = 0;
+  @ColInfo('送货超时次数', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) numberOfDeliveryDelays = 1;
+  @ColInfo('停留超时次数', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) numberOfStayOvertime = 1;
+  @ColInfo('订单其它费用', {
+    width: 140, mode: 'numberEdit', cellRendererParams: {
+      decimal: 4,
+      elMin: 0,
+      elMax: 999999999,
+    }
+  }) loading_type = 1;
+    @ColInfo('配载类型', {
+    width: 140, mode: 'select', cellRendererParams: {
+      callback: async () => {
+        return [
+          { id: 1, label: '整车' },
+          { id: 2, label: '零担' },
+        ];
+      }
+    }
+  }) loadingType = 1;
+   @ColInfo('运输模式', {
+    width: 140, mode: 'select', cellRendererParams: {
+      callback: async () => {
+        return [
+          { id: 1, label: '城配' },
+          { id: 2, label: '干线' },
+          { id: 3, label: '直线' },
+        ];
+      }
+    }
+  }) transportMode = 1;
+  @ColInfo('运输费用', { width: 140, pinned: 'right' }) fee = '';
+}
+
+
+
+const clone = (item: PlainObject) => {
+  // 如果是条件字段，创建带显示文本的元素
+  if (item.type === 'condition') {
+    const displayMap: Record<string, string> = {
+      'pick_order_single': '分拣单类型=一单一货',
+      'pick_order_multi': '分拣单类型=一单多货',
+      'pick_order_same': '分拣单类型=相同货品',
+      'pick_order_second': '分拣单类型=二次分拣',
+      'pick_mode_basket': '拣货方式=逐筐分拣'
+    };
+
+    return {
+      id: item.defaultValue,
+      name: displayMap[item.defaultValue] || item.defaultValue
+    };
+  }
+  return { ...item };
+};
+
+// 定义目标列表，用于接收拖拽的元素
+const targetList = ref<PlainObject[]>([]);
+
+const commonList = ref<PlainObject[]>([
+  { id: '+', name: '＋' },
+  { id: '-', name: '－' },
+  { id: '*', name: '×' },
+  { id: '/', name: '÷' },
+  { id: '(', name: '(' },
+  { id: ')', name: ')' },
+  { id: '>', name: '>' },
+  { id: '<', name: '<' },
+  { id: '>=', name: '>=' },
+  { id: '<=', name: '<=' },
+  { id: '==', name: '=' },
+  { id: 'num', name: '1', type: 'number' },
+  { id: ',', name: ',' },
+  { id: 'IF', name: 'IF' },
+  { id: '||', name: '或' },
+  { id: '&&', name: '且' },
+  { id: '%', name: '余' }
+])
+
+// 定义公共字段
+const commonFields = [
+  { id: 'goods_type_count', name: '货品种类数' },
+  { id: 'goods_count', name: '货品数量' },
+  { id: 'weight', name: '总重量' },
+  { id: 'volume', name: '总体积' },
+  { id: 'destination_type', name: '目的地类型', type: 'condition', conditionType: 'destinationType', defaultValue: "终点站" },
+  { id: 'transport_mode', name: '运输模式', type: 'condition', conditionType: 'transportMode', defaultValue: "城配" },
+  { id: 'loading_type', name: '配载类型', type: 'condition', conditionType: 'loadingType', defaultValue: "整车" }
+];
+
+const driverFields = [
+  { id : 'order_num', name: '订单数' },
+  { id : 'number_of_delivery_delays', name: '送货超时次数' },
+  { id : 'number_of_stay_overtime', name: '停留超时次数' }
+]
+
+
+const customFieldsList = computed(() => {
+  // 根据费用类型添加特有字段
+  const feeTypeFields = type == 1 : 
+  return feeTypeSpecificFields;
+});
+
+const handles = new TableCmdHandles<FormulaTable>()
+
+async function test() {
+  console.log("测试")
+  let formulaString = OnGetFormulaString();
+  if (formulaString.length > 1024) {
+    return notifyWarning('公式超长')
+  }
+
+  if (formulaString.length == 0) {
+    return notifyWarning('公式不能为空')
+  }
+
+  const tableRef = formValues.type === 2 ? driverDataTable : goodsOwnerDataTable;
+   let api = tableRef.value.api()!;
+   let tempArr: any[] = [];
+   let tmpList = easy.agGetAllRows(api) as PlainObject[];
+  console.log(goodsOwnerDataTable.value);
+  let list = DeepClone(tmpList)
+  for (let item of list) {
+    if(item.recId == 0){
+      return
+    }
+    console.log(item)
+     tempArr.push([item.recId, ToQueryParam(item), 0]);
+  }
+
+    try {
+    let rows = await httpPost(TransportFeePolicyModel.ImitateFormula, {
+      formula: formulaString,
+      type: type.value,
+      $xchg: tempArr
+    }) as PlainObject[];
+    console.log(rows)
+    for (let row of rows) {
+      let index = toNumber(row.recId) - 1;
+      let fee = "0.0000";
+      if (row.fee != null) {
+        fee = row.fee.toString()
+      }
+      tmpList[index].fee = fee;
+    }
+    api.applyTransaction({ update: tmpList })
+  } catch (e: any) {
+    Alert(e.message)
+  }
+}
+
+const formulaHandles = new TableCmdHandles()
+
+function ClearFormula() {
+  targetList.value = [];
+}
+
+async function SaveTemplate() {
+  for (let item of targetList.value) {
+    if (item.id.toString() == 'num' && isNaN(toNumber(item.name))) {
+      return notifyWarning('数字输入不合法')
+    }
+  }
+
+  let formulaString = OnGetFormulaString();
+  if (formulaString.length > 1024) {
+    return notifyWarning('公式超长')
+  }
+
+  if (formulaString.length == 0) {
+    return notifyWarning('公式不能为空')
+  }
+
+  let showArray = [];
+  showArray.push({ label: "请输入名称", labelWidth: 100, defaultValue: '', type: 'text', maxLength: '50' });
+  let resp = await easy.showDialog(
+    TextInput,
+    { showArray },
+    {
+      title: '请输入...',
+      customStyle: { width: '500px', height: '200px' },
+      closeOnPressEscape: true, defaultFooter: true
+    }
+  );
+  let input = resp?.content1 ?? "";
+
+  if (!IsStringValid(input)) {
+    return notifyWarning('请输入有效值')
+  }
+  try {
+    await httpPost('/api/o/cfg_user_data_formula_insert', { type: 7, details: formulaString, formulaName: input })
+  } catch (e: any) {
+    if (e.message.includes('UK_cfg_ui_layout')) {
+      Alert('名称已经存在！')
+      return
+    }
+  }
+  easy.reloadTransform('@ScorePerformanceFormulaTemplate')
+  notifySuccess('添加成功')
+}
+
+function OnGetFormulaString() {
+  let sb: string[] = [];
+  for (let item of targetList.value) {
+    if (item.type === 'number') {
+      sb.push(item.name.toString())
+    } else if (item.id) {
+      sb.push(item.id.toString())
+    }
+  }
+  return sb.join('');
+}
+
+async function OnChangedTemplateList(newVal: ListId, oldVal: ListId) {
+  if (newVal != oldVal) {
+    let recId = toNumber(newVal);
+    if (recId == 0) return;
+    let row = await httpPost('/api/o/cfg_user_data_get', { recId: recId }).then(res => {
+      if (res && res.length > 0) return res[0]
+      else return null
+    });
+    if (row != null) {
+      ParseFormula(row.data)
+    }
+  }
+}
+
+const easyForm = ref<easy.IEasyForm>();
+popup.resultDef(async () => {
+  const isValid = await easyForm.value?.validate();
+  if (!isValid) {
+    return
+  }
+
+  if (formValues.policyName.trim() == '') {
+    return notifyWarning('请填写策略名称')
+  }
+
+  // 验证公式
+  for (let item of targetList.value) {
+    if (item.id.toString() == 'num' && isNaN(toNumber(item.name))) {
+      return notifyWarning('数字输入不合法')
+    }
+  }
+
+  let formulaString = OnGetFormulaString();
+  if (formulaString.length > 1024) {
+    return notifyWarning('公式超长')
+  }
+
+  if (formulaString.length == 0) {
+    return notifyWarning('公式不能为空')
+  }
+
+  if (formValues.ownerId === 0) {
+    return notifyWarning('请选择货主')
+  }
+
+  if (formValues.warehouseId === 0) {
+    return notifyWarning('请选择仓库')
+  }
+
+  if (formValues.logisticsId === 0) {
+    return notifyWarning('请选择物流')
+  }
+
+  let params = DeepClone(formValues);
+  params.policyId = props?.policyId || 0;
+  params.formula = formulaString;
+
+  try {
+    console.log(params);
+    await httpPost(TransportFeePolicyModel.InsertOrUpdate, params)
+  } catch (e: any) {
+    const msg = e.message;
+    if (msg.includes('UNI_cfg_tms_transport_policy_name')) {
+      Alert("策略名称已存在");
+      return;
+    } else {
+      Alert(msg);
+      return;
+    }
+  }
+  notifySuccess('保存成功！')
+  popup.done(true);
+})
+</script>
+
+<style lang="scss" scoped>
+.drag-container {
+  display: flex;
+  height: 150px;
+  width: 100%;
+  gap: 10px;
+}
+
+.draggable-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.drag-target {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  min-height: 200px;
+  width: 100%;
+  gap: 10px;
+}
+
+.drag-common-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 50%;
+  background-color: #fff;
+  border: 1px solid #F0F0F0;
+  border-radius: 5px;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 5px;
+}
+
+.drag-target-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border: 1px solid #A5A5A5;
+  border-radius: 5px;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 5px;
+}
+
+.draggable-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 35px;
+  width: 35px;
+  cursor: pointer;
+  border: solid 1px #AFAFFF;
+  border-radius: 5px;
+}
+
+.draggable-item-fit {
+  padding: 0 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 35px;
+  width: fit-content;
+  cursor: pointer;
+  border: solid 1px #AFAFFF;
+  border-radius: 5px;
+}
+
+.draggable-item-condition {
+  padding: 0 8px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  height: 35px;
+  width: fit-content;
+  cursor: pointer;
+  border: solid 1px #AFAFFF;
+  border-radius: 5px;
+  background-color: #f8f8ff;
+}
+
+.cursor-indicator {
+  padding: 0 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 35px;
+  width: fit-content;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.bordered {
+  border: solid 1px #AFAFFF;
+  border-radius: 5px;
+}
+
+.example {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #efefef;
+  line-height: 0;
+  font-size: 10pt;
+  border-radius: 5px;
+
+  .p {
+    white-space: nowrap !important;
+  }
+}
+</style>

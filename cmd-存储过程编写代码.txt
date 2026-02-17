@@ -1,0 +1,42 @@
+other_fee_details_export_query
+
+SET @tmp_query = :QUERY; 
+SET @tmp_create_from = FN_GET('created_start'); 
+SET @tmp_create_to = FN_GET('created_end');
+SET @tmp_check_from = FN_GET('checked_start');
+SET @tmp_check_to = FN_GET('checked_end'); 
+SET @tmp_where = CONCAT_WS(' AND ',' WHERE TRUE ', 
+	FN_MY_GOODS_OWNER('oof.owner_id',FN_GET('owner_id')),
+	FN_MY_WAREHOUSES('oof.warehouse_id',FN_GET('warehouse_id')),
+	FN_MAKE_LIKE('name','oof.name'),
+	FN_MAKE_LIKE2('remark','oof.remark'),
+	FN_MAKE_A('status','oof.status'),
+	FN_MAKE_Q('order_no','oof.order_no'),
+	FN_MAKE_Q('order_type','oof.order_type'),
+	FN_MAKE_A('class_id', 'oof.class_id'),
+	FN_MAKE_A('creator_id','oof.creator_id'),
+	FN_MAKE_A('modifier_id','oof.modifier_id'),
+	FN_MAKE_LIKE2('spec_no','gs.spec_no'),
+	IF(@tmp_create_from = '0000-00-00' OR ISNULL (@tmp_create_from), NULL, CONCAT('oof.created >=',QUOTE(@tmp_create_from))), 
+	IF(@tmp_create_to = '0000-00-00' OR ISNULL (@tmp_create_to), NULL, CONCAT('oof.created <=',QUOTE(CONCAT(@tmp_create_to, ' 23:59:59')))),
+	IF(@tmp_check_from = '0000-00-00' OR ISNULL (@tmp_check_from), NULL, CONCAT('oof.check_time >=',QUOTE(@tmp_check_from))), 
+	IF(@tmp_check_to = '0000-00-00' OR ISNULL (@tmp_check_to), NULL, CONCAT('oof.check_time <=',QUOTE(CONCAT(@tmp_check_to, ' 23:59:59')))));
+
+SET @tmp_sql = CONCAT('SELECT ',FN_CALC_ROWS(),
+	' oof.rec_id,oof.warehouse_id,oof.owner_id,oof.class_id,oof.name,oof.num,oof.cost,oof.order_type,oof.order_no,
+	gs.spec_no , gg.goods_name, gg.short_name, gg.goods_no, gs.spec_name, gs.spec_code , gs.barcode, oofd.num AS good_num,oof.created,oof.check_time,oof.creator_id,oof.modifier_id,oof.status,oof.remark,oof.image_urls,IF(oof.image_urls=\'\',\'无\',\'有\') images, sgo.currency_id ',
+	' FROM owner_other_fee_detail oofd 
+	LEFT JOIN owner_other_fee oof ON oof.rec_id = oofd.rec_id 
+	LEFT JOIN goods_spec gs ON gs.spec_id = oofd.spec_id 
+	LEFT JOIN goods_goods gg ON gg.goods_id = gs.goods_id 
+	LEFT JOIN sys_goods_owner sgo ON sgo.owner_id = oof.owner_id ',@tmp_where,' ORDER BY oofd.rec_id DESC ',FN_LIMIT()
+);
+
+CALL SP_QUERY(@tmp_sql);
+
+
+(warehouse_id,仓库)(owner_id,货主)(class_id,费用类别)(name,费用名称)(currency_id,币种)(order_type,关联业务)(order_no,关联单据)(num,数量)(cost,金额)(spec_no,商家编码)(goods_name,货品名称)(short_name,货品简称)(goods_no,货品编号)(spec_name,规格名称)(spec_code,规格码)(barcode,条形码)(good_num,数量-单品的数量)(created,创建时间)(check_time,审核时间)(creator_id,创建人)(modifier_id,修改人)(status,状态)(images,图片)(remark,备注)
+
+
+(warehouse_id,warehouse_name)(owner_id,goods_owner_name)(creator_id,employee_name)(modifier_id,employee_name)(status,other_fee_status)(class_id,other_fee_class)(order_type,other_fee_order_type)(good_num,goods_count)(currency_id,currency_name)
+

@@ -1,0 +1,15 @@
+{
+	"nodes":[
+		{"id":"64fc054c4265be25","type":"text","text":"产品","x":-47,"y":-280,"width":106,"height":51},
+		{"id":"0123916642a71a5d","type":"text","text":"开发","x":-47,"y":-11,"width":106,"height":51,"color":"2"},
+		{"id":"6753b8ed6e5e9327","type":"text","text":"测试","x":246,"y":-154,"width":94,"height":51},
+		{"id":"544eb66a06e3cb25","type":"text","text":"技术支持","x":-340,"y":-154,"width":141,"height":51}
+	],
+	"edges":[
+		{"id":"ad8fd70d9f833c03","fromNode":"64fc054c4265be25","fromSide":"right","toNode":"6753b8ed6e5e9327","toSide":"top","fromEnd":"arrow"},
+		{"id":"92b6d9f753f98681","fromNode":"6753b8ed6e5e9327","fromSide":"bottom","toNode":"0123916642a71a5d","toSide":"right","fromEnd":"arrow"},
+		{"id":"8f868e59613f15c6","fromNode":"0123916642a71a5d","fromSide":"left","toNode":"544eb66a06e3cb25","toSide":"bottom","fromEnd":"arrow"},
+		{"id":"01f2ce79863e6d25","fromNode":"544eb66a06e3cb25","fromSide":"top","toNode":"64fc054c4265be25","toSide":"left","fromEnd":"arrow"},
+		{"id":"a01b804459385079","fromNode":"64fc054c4265be25","fromSide":"bottom","toNode":"0123916642a71a5d","toSide":"top","fromEnd":"arrow"}
+	]
+}

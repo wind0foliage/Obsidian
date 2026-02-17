@@ -1,0 +1,119 @@
+存储过程调试方法：
+
+获取用户变量的方法：
+-- 在存储过程调用后
+CALL your_procedure(); -- 调用存储过程
+SELECT @tmp_query; -- 查看变量值  //办不了 --- 必须找张表把值存储下来
+
+条件查询 通用模板
+-- 通用框架（无需业务细节）
+SET @inner_where = CONCAT_WS(' AND ', 'TRUE',
+    'oof.status = 1',  -- 任意条件
+    'oof.created >= "2023-01-01"'
+);
+
+SET @inner_sql = CONCAT(
+    'SELECT main.id ',  -- 主表自增ID
+    'FROM main_table main ',
+    'INNER JOIN owner_other_fee oof ON oof.rec_id = main.rec_id ',	
+    'WHERE ', @inner_where,
+    'ORDER BY main.rec_id DESC ',
+    'LIMIT 20'
+);
+
+SET @final_sql = CONCAT(
+    'SELECT SQL_CALC_FOUND_ROWS main.id, oof.status, main.name ',
+    'FROM (', @inner_sql, ') AS filtered ',
+    'INNER JOIN main_table main ON main.id = filtered.id ',
+    'INNER JOIN owner_other_fee oof ON oof.rec_id = main.rec_id '
+);
+
+
+
+### 1. **创建日志表**
+
+```sql
+-- 创建日志表（如果尚未创建）
+CREATE TABLE IF NOT EXISTS procedure_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,   -- 日志ID
+    procedure_name VARCHAR(255),         -- 存储过程名称
+    query_text TEXT,                     -- 查询文本或日志内容
+    log_time DATETIME DEFAULT CURRENT_TIMESTAMP  -- 记录时间
+);
+```
+
+### 2. **创建记录日志的存储过程**
+
+```sql
+-- 创建存储过程，用于记录日志
+DELIMITER //
+
+CREATE PROCEDURE record_plog(	
+    IN p_procedure_name VARCHAR(255),  -- 存储过程名称
+    IN p_query_text TEXT               -- 查询文本或日志内容
+)
+BEGIN
+    -- 插入日志到日志表
+    INSERT INTO procedure_log (procedure_name, query_text)
+    VALUES (p_procedure_name, p_query_text);
+END//
+
+DELIMITER ;
+```
+
+### 3. **在存储过程或函数中记录日志**
+
+在存储过程中，当需要记录日志时，调用 `record_plog` 存储过程：
+
+```sql
+-- 在存储过程中记录日志
+CALL record_plog("your_procedure_name", "your_query_or_log_message");
+```
+
+### 4. **查看日志**
+
+可以用以下查询查看存储的日志记录，按时间倒序排列：
+
+```sql
+-- 查看日志，按时间降序排列
+SELECT * FROM procedure_log ORDER BY log_time DESC;
+```
+
+### 5. **动态 SQL 查询通用模板**
+
+下面是一个通用的动态 SQL 查询模板，支持条件拼接：
+
+```sql
+-- 设置查询条件
+SET @inner_where = CONCAT_WS(' AND ', 'TRUE', 
+    'oof.status = 1',  -- 任意条件（例如，状态为1）
+    'oof.created >= "2023-01-01"'  -- 其他业务条件
+);
+
+-- 设置内层 SQL
+SET @inner_sql = CONCAT(
+    'SELECT main.id ',  -- 主表自增ID
+    'FROM main_table main ',
+    'INNER JOIN owner_other_fee oof ON oof.rec_id = main.rec_id ',
+    'WHERE ', @inner_where,
+    'ORDER BY main.rec_id DESC ',
+    'LIMIT 20'
+);
+
+-- 设置最终查询 SQL
+SET @final_sql = CONCAT(
+    'SELECT SQL_CALC_FOUND_ROWS main.id, oof.status, main.name ',
+    'FROM (', @inner_sql, ') AS filtered ',
+    'INNER JOIN main_table main ON main.id = filtered.id ',
+    'INNER JOIN owner_other_fee oof ON oof.rec_id = main.rec_id '
+);
+```
+
+### 6. **记录动态 SQL 到日志**
+
+在生成动态 SQL 查询后，可以将其记录到日志中：
+
+```sql
+-- 记录动态 SQL 查询到日志
+CALL record_query_log("dynamic_sql_query", @final_sql);
+```

@@ -1,0 +1,84 @@
+存储过程传输 list的过程
+
+DB.Exec("sys_import_tmp", JSON.Stringify(goodsList));
+插入临时表
+DB.Exec(LogisticsModel.UpdateLogisticsSender, args.printmethon);
+
+DECLARE stockout_order_consign_cursor CURSOR FOR
+SELECT tmp.stockout_id, tmp.src_order_id, tmp.stockout_no, (tmp.num - SUM(IF(somo.operate_type = 0, IFNULL(somo.num, 0), 0))) AS unfinish
+FROM (
+	SELECT so.stockout_id, so.src_order_id, so.stockout_no, SUM(sod.num) num
+	FROM stockout_order so
+	LEFT JOIN stockout_order_detail sod ON sod.stockout_id = so.stockout_id
+	INNER JOIN tmp_xchg tx ON tx.f1 = sod.stockout_id
+	WHERE so.status = 55 AND sod.is_package = 0 AND tx.f3 = 1 AND so.consign_status & 1 = 0
+	GROUP BY so.stockout_id
+) tmp
+LEFT JOIN stockout_order_multi_operate somo ON somo.stockout_id = tmp.stockout_id
+GROUP BY tmp.stockout_id
+
+cmd.txt 
+同步脚本：
+
+存储过程开发模板
+DROP PROCEDURE IF EXISTS `SP_XXXX`;
+DELIMITER //
+CREATE PROCEDURE `SP_XXXXX`(IN P_PrintMethod INT(11))
+	SQL SECURITY INVOKER
+MAIN_LABEL:BEGIN
+	DECLARE V_NOT_FOUND, V_Type, V_RecId, V_owner_id, V_warehouse_id INT DEFAULT 0;
+	DECLARE V_Query VARCHAR(1024) DEFAULT '';
+	DECLARE sender_cursor CURSOR FOR SELECT f1, f2 FROM tmp_xchg WHERE f3 = V_Type ORDER BY rec_id;
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET V_NOT_FOUND = 1;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		ROLLBACK;
+		RESIGNAL;
+	END;
+
+	START TRANSACTION;
+	
+	COMMIT;
+END//
+
+DELIMITER ;
+
+
+游标创建模板
+DECLARE detail_cursor CURSOR FOR SELECT f1,f2,f3 FROM tmp_xchg;
+
+OPEN order_cursor;
+	ORDER_LABEL:LOOP
+		SET V_NOT_FOUND = 0;
+		FETCH detail_cursor INTO V_RecId, V_DetailInfo, V_Deleted;
+		IF V_NOT_FOUND THEN
+			SET V_NOT_FOUND = 0;
+			LEAVE ORDER_LABEL;
+		END IF;
+		
+		START TRANSACTION;
+			
+		COMMIT;
+	
+	END LOOP;
+	CLOSE order_cursor;
+
+
+计算page
+ FN_CALC_ROWS(),
+ 
+ 
+ 批量报错
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_error_table(
+	rec_id INT(11) AUTO_INCREMENT,
+	stockout_no VARCHAR(40) NOT NULL DEFAULT '',
+	message VARCHAR(255) NOT NULL DEFAULT '',
+	PRIMARY KEY(rec_id)
+	) ENGINE=MYISAM;
+DELETE FROM tmp_error_table;
+
+INSERT INTO tmp_error_table(stockout_no, message) VALUES(V_StockoutNo, '出库单已经被处理了！');
+
+SELECT stockout_no, message FROM tmp_error_table;
+DELETE FROM tmp_error_table;
+DROP TABLE tmp_error_table;
