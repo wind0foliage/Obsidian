@@ -11,10 +11,14 @@
             "id": "d690f537c5510039",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Ai聊天/快捷总结命令.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "新标签页"
+              "title": "快捷总结命令"
             }
           }
         ]
@@ -49,7 +53,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:excalidraw",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -177,8 +181,8 @@
             "state": {
               "type": "git-view",
               "state": {},
-              "icon": "lucide-ghost",
-              "title": "git-view"
+              "icon": "git-pull-request",
+              "title": "Source Control"
             }
           }
         ],
@@ -203,24 +207,46 @@
       "audio-recorder:开始/结束录音": false,
       "workspaces:管理工作区布局": false,
       "markdown-importer:打开 Markdown 格式转换器": false,
-      "obsidian-git:Open Git source control": false
+      "obsidian-git:Open Git source control": false,
+      "obsidian-excalidraw-plugin:新建绘图文件": false
     }
   },
   "active": "d690f537c5510039",
   "lastOpenFiles": [
-    "README.md",
-    "2026-02-17.md",
-    "未命名 1.canvas",
-    "未命名.canvas",
-    "未命名 1.base",
-    "WMS系统笔记/客户端代码积累 - 随手一记.md",
-    "WMS系统笔记/erlang 电商架构图.md",
-    "模板/周会-分享模板.md",
-    "模板/日志模板文件.md",
+    "Ai聊天/Ai与程序.md",
+    "Ai聊天/快捷总结命令.md",
+    "Ai聊天/金融本质.md",
+    "Ai聊天/AI 重构 IT 行业生产体系.md",
+    "未命名",
+    "sales_order_analysis.md",
+    "SP_OPEN_STOCK_PICK_UPDATE_STATUS_加锁分析.md",
+    "销售订单业务核心分析.md",
+    "AI 重构 IT 行业生产体系-mindmap.md",
+    "Ai聊天",
     "wirekshark.md",
-    "未命名.md",
+    "README.md",
+    "销售订单-接口下单和订单递交业务流程分析.md",
+    "使用方列表业务核心分析.md",
+    "绩效=S-A-B-C.md",
+    "未命名 3.base",
+    "未命名 2.base",
+    "未命名 1.base",
+    "未命名 1.canvas",
     "未命名.base",
+    "未命名.canvas",
     "欢迎.md",
-    "测试代码.md"
+    "测试代码.md",
+    "2026-02-17.md",
+    "死锁问题解决/lshzp03 死锁问题.md",
+    "Excalidraw/wms物理仓库模型.md",
+    "Excalidraw/物理配置流程图.md",
+    "Excalidraw/团队架构.canvas",
+    "Excalidraw/打印流程.md",
+    "值班问题排查/值班问题排查.md",
+    "值班问题排查/值班问题模板.md",
+    "值班问题排查/值班问题-示例.md",
+    "问题处理日志/慢sql优化.md",
+    "热敏单量统计业务核心分析.md",
+    "Excalidraw/分析-维护平台可发效期的使用流程.md"
   ]
 }
