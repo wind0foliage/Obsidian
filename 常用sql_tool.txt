@@ -1,6 +1,6 @@
 根据name查找货主id：
 货主表： sys_goods_owner
-select * from sys_goods_owner sgo where short_name = '';
+select * from sys_goods_owner sgo where short_name = '甜水富文-云集回传';
 
 常用字段：
 owner_id;
@@ -9,7 +9,7 @@ short_name;
 根据name/id查找仓库：
 仓库表：sys_warehouse
 
-select * from sys_warehouse sw where name like '%京链4号库%';
+select * from sys_warehouse sw where name like '%hwq仓库%';
 
 常用字段：
 warehouse_id
@@ -27,7 +27,7 @@ select * from cfg_warehouse_position where rec_id = 12590;
 spec_id = 126149
 
 查看配置值
-select * from sys_setting where `key` in ('auto_subscribe_logistics_track');
+select * from sys_setting where `key` in ('multi_logistics_print_sequence_optimize');
 
 
 select * from sys_setting where `key`  = 'warehouse_auto_task';
@@ -35,9 +35,10 @@ select * from sys_setting where `key`  = 'warehouse_auto_task';
 
 select * from sys_setting where `key`  = 'register_use_recommend_package_type'\G
 
-SELECT st.package_id, IFNULL(ste.reserve_v3, 0), st.receiver_province, st.receiver_city, st.receiver_district, IFNULL(so.logistics_id, st.logistics_id), st.goods_type_count, st.trade_no, st.warehouse_id, st.owner_id, IFNULL(ss.shop_id, 0), st.weight, st.volume, st.shop_name
-FROM sales_trade st 
-LEFT JOIN sales_trade_ex ste ON st.trade_id = ste.trade_id
-LEFT JOIN sys_shop ss ON ss.shop_name = st.shop_name AND ss.owner_id = st.owner_id AND ss.is_disabled = 0
-LEFT JOIN stockout_order so ON so.src_order_id = st.trade_id AND so.src_order_type = 1
-WHERE st.trade_id = 54994;
+# 查询当前员工id
+
+SELECT count(DISTINCT eo.owner_id ORDER BY eo.owner_id)
+		FROM sys_goods_owner o,cfg_employee_owner eo 
+		WHERE eo.owner_id=o.owner_id AND eo.employee_id=277 AND eo.is_denied=0 AND o.is_disabled=0;
+		
+select *  from hr_employee limit 1;
