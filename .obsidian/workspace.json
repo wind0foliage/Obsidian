@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "c920dfa3c5ada924",
+        "id": "ac581bdd6ce0d17c",
         "type": "tabs",
         "children": [
           {
-            "id": "89f54d2883d54fca",
+            "id": "d690f537c5510039",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -189,7 +189,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -209,7 +210,7 @@
       "obsidian-excalidraw-plugin:新建绘图文件": false
     }
   },
-  "active": "89f54d2883d54fca",
+  "active": "d690f537c5510039",
   "lastOpenFiles": [
     "Ai聊天/索引.md",
     "Ai聊天/索引设计.md",
@@ -226,17 +227,7 @@
     "Ai聊天/Ai与程序.md",
     "Ai聊天/金融本质.md",
     "Ai聊天/AI 重构 IT 行业生产体系.md",
-    "未命名",
-    "sales_order_analysis.md",
-    "SP_OPEN_STOCK_PICK_UPDATE_STATUS_加锁分析.md",
-    "销售订单业务核心分析.md",
-    "AI 重构 IT 行业生产体系-mindmap.md",
     "Ai聊天",
-    "wirekshark.md",
-    "README.md",
-    "销售订单-接口下单和订单递交业务流程分析.md",
-    "使用方列表业务核心分析.md",
-    "绩效=S-A-B-C.md",
     "未命名 3.base",
     "未命名 2.base",
     "未命名 1.base",
