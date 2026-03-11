@@ -212,6 +212,14 @@
   },
   "active": "d690f537c5510039",
   "lastOpenFiles": [
+    "Excalidraw/分析-维护平台可发效期的使用流程.md",
+    "Excalidraw/wms物理仓库模型.md",
+    "Excalidraw/物理配置流程图.md",
+    "Excalidraw/团队架构.canvas",
+    "Excalidraw/货位分配.md",
+    "Excalidraw/打印流程.md",
+    "WMS系统笔记/客户端代码积累 - 随手一记.md",
+    "WMS系统笔记/小技巧.md",
     "慢查询/慢查询接口名单.md",
     "Pasted image 20260306191743.png",
     "WMS系统笔记/每日必做-.md",
@@ -223,7 +231,6 @@
     "Pasted image 20260305220316.png",
     "Pasted image 20260305220232.png",
     "Pasted image 20260305220125.png",
-    "WMS系统笔记/客户端代码积累 - 随手一记.md",
     "WMS系统笔记/产品-出库.md",
     "WMS系统笔记/订单  -- 递交订单.md",
     "WMS系统笔记/货位批量冻结.md",
@@ -244,17 +251,11 @@
     "sales_order_analysis.md",
     "SP_OPEN_STOCK_PICK_UPDATE_STATUS_加锁分析.md",
     "销售订单业务核心分析.md",
-    "AI 重构 IT 行业生产体系-mindmap.md",
     "Ai聊天",
-    "wirekshark.md",
-    "README.md",
-    "销售订单-接口下单和订单递交业务流程分析.md",
-    "使用方列表业务核心分析.md",
     "未命名 3.base",
     "未命名 2.base",
     "未命名 1.base",
     "未命名 1.canvas",
-    "未命名.canvas",
-    "Excalidraw/团队架构.canvas"
+    "未命名.canvas"
   ]
 }
